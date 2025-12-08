@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "314580893934",
+    "project_id": "mobcomp-a030c",
+    "storage_bucket": "mobcomp-a030c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:314580893934:android:a2921be861bd0e5d4d33ff",
+        "android_client_info": {
+          "package_name": "com.example.junklabs"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCh8HPtgPCpVr6Q3Sp-N9zR_lG1Dp0kQww"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
