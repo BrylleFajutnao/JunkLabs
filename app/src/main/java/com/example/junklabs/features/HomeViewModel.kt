@@ -6,7 +6,9 @@ import com.example.junklabs.model.TrashCategory
 import com.example.junklabs.model.TrashItem
 import com.example.junklabs.model.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -14,7 +16,7 @@ import kotlinx.coroutines.tasks.await
 
 class HomeViewModel : ViewModel() {
 
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = Firebase.auth
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 
     private val _user = MutableStateFlow<User?>(null)
@@ -23,11 +25,7 @@ class HomeViewModel : ViewModel() {
     private val _trashItems = MutableStateFlow<List<TrashItem>>(emptyList())
     val trashItems: StateFlow<List<TrashItem>> = _trashItems
 
-    init {
-        fetchUserData()
-    }
-
-    private fun fetchUserData() {
+    fun fetchUserData() {
         viewModelScope.launch {
             val firebaseUser = auth.currentUser ?: return@launch
             val userRef = firestore.collection("users").document(firebaseUser.uid)
@@ -40,7 +38,7 @@ class HomeViewModel : ViewModel() {
                 val items = trashSnapshot.documents.mapNotNull { it.toObject(TrashItem::class.java) }
                 _trashItems.value = items
             } catch (e: Exception) {
-                // Handle error
+                // Handle error fetching data
             }
         }
     }
@@ -53,9 +51,10 @@ class HomeViewModel : ViewModel() {
             val newItem = TrashItem(name, category.name)
             try {
                 userRef.collection("trashItems").add(newItem).await()
+                // Optimistically update the UI, or refetch from Firestore for consistency
                 _trashItems.value = _trashItems.value + newItem
             } catch (e: Exception) {
-                // Handle error
+                // Handle error adding item
             }
         }
     }

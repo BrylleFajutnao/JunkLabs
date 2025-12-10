@@ -1,6 +1,7 @@
 package com.example.junklabs.features
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,13 +23,37 @@ fun AuthNavigation() {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = viewModel()
     val authState by authViewModel.authState.collectAsState()
-    var showErrorDialog by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var fullName by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
+
+    // Handle navigation and error dialogs based on authState
+    when (val state = authState) {
+        AuthState.LoggedIn -> {
+            LaunchedEffect(Unit) {
+                navController.navigate("home") {
+                    popUpTo("login") { inclusive = true }
+                }
+            }
+        }
+        AuthState.LoggedOut -> {
+            LaunchedEffect(Unit) {
+                navController.navigate("login") {
+                    popUpTo("home") { inclusive = true }
+                }
+            }
+        }
+        is AuthState.Error -> {
+            ErrorDialog(message = state.message) {
+                authViewModel.resetErrorState()
+            }
+        }
+        AuthState.Loading -> {
+            LoadingScreen()
+        }
+    }
 
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
@@ -64,30 +89,7 @@ fun AuthNavigation() {
             )
         }
         composable("home") {
-            HomeScreen()
-        }
-    }
-
-    when (val state = authState) {
-        is AuthState.LoggedIn -> {
-            navController.navigate("home") {
-                popUpTo("login") { inclusive = true }
-            }
-        }
-        is AuthState.Error -> {
-            errorMessage = state.message
-            showErrorDialog = true
-        }
-        is AuthState.Loading -> {
-            LoadingScreen()
-        }
-        else -> {}
-    }
-
-    if (showErrorDialog) {
-        ErrorDialog(message = errorMessage) {
-            showErrorDialog = false
-            authViewModel.resetAuthState()
+            HomeScreen(onSignOut = { authViewModel.signOut() })
         }
     }
 }

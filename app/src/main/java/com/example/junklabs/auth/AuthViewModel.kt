@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.junklabs.model.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -12,18 +14,32 @@ import kotlinx.coroutines.tasks.await
 
 class AuthViewModel : ViewModel() {
 
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+    private val auth: FirebaseAuth = Firebase.auth
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
 
-    private val _authState = MutableStateFlow<AuthState>(AuthState.LoggedOut)
+    private val _authState = MutableStateFlow<AuthState>(AuthState.Loading) // Start in a loading state
     val authState: StateFlow<AuthState> = _authState
+
+    init {
+        // Listen for authentication state changes
+        viewModelScope.launch {
+            auth.addAuthStateListener { firebaseAuth ->
+                val user = firebaseAuth.currentUser
+                if (user != null) {
+                    _authState.value = AuthState.LoggedIn
+                } else {
+                    _authState.value = AuthState.LoggedOut
+                }
+            }
+        }
+    }
 
     fun login(email: String, pass: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
             try {
                 auth.signInWithEmailAndPassword(email, pass).await()
-                _authState.value = AuthState.LoggedIn
+                // The auth state listener will automatically handle the successful login
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "An unknown error occurred")
             }
@@ -37,18 +53,22 @@ class AuthViewModel : ViewModel() {
                 val authResult = auth.createUserWithEmailAndPassword(email, pass).await()
                 val firebaseUser = authResult.user
                 if (firebaseUser != null) {
-                    val user = User(fullName, username, email)
-                    firestore.collection("users").document(firebaseUser.uid).set(user).await()
+                    val newUser = User(fullName, username, email)
+                    firestore.collection("users").document(firebaseUser.uid).set(newUser).await()
+                    // The auth state listener will automatically handle the successful registration
                 }
-                _authState.value = AuthState.LoggedIn
             } catch (e: Exception) {
                 _authState.value = AuthState.Error(e.message ?: "An unknown error occurred")
             }
         }
     }
 
-    fun resetAuthState() {
-        _authState.value = AuthState.LoggedOut
+    fun signOut() {
+        auth.signOut()
+    }
+
+    fun resetErrorState() {
+        _authState.value = AuthState.LoggedOut // Reset to a neutral state
     }
 }
 
