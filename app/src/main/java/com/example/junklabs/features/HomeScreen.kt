@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.junklabs.components.Logo
+import com.example.junklabs.model.TrashCategory
 import com.example.junklabs.model.TrashItem
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
@@ -50,33 +54,87 @@ fun HomeScreen(onSignOut: () -> Unit) {
             CircularProgressIndicator()
         }
     } else {
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Logo()
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Welcome, ${user!!.fullName}!", fontSize = 20.sp)
-
-            // THE NEW STATISTICS VIEWER
-            Spacer(modifier = Modifier.height(16.dp))
-            SimpleStatisticsViewer(trashItems) // <-- Statistics Card Call
-
-            // TRASH INPUT SECTION (Assuming TrashInput Composable exists)
-            Spacer(modifier = Modifier.height(16.dp))
-            TrashInput { name, category ->
-                homeViewModel.addTrashItem(name, category)
+            item {
+                Logo()
+            }
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            item {
+                Text(text = "Welcome, ${user!!.fullName}!", fontSize = 20.sp)
             }
 
-            // TRASH SUMMARY (THE LIST OF ITEMS)
-            Spacer(modifier = Modifier.height(16.dp))
-            TrashSummary(trashItems)
+            // THE NEW STATISTICS VIEWER
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            item {
+                SimpleStatisticsViewer(trashItems)
+            }
 
-            Spacer(modifier = Modifier.weight(1f))
-            Button(onClick = onSignOut) {
-                Text("Sign Out")
+            // TRASH INPUT SECTION
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            item {
+                TrashInput { name, category ->
+                    homeViewModel.addTrashItem(name, category)
+                }
+            }
+
+            // TRASH SUMMARY HEADER
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            item {
+                Text(
+                    text = "Collected Trash",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            // TRASH LIST ITEMS
+            if (trashItems.isEmpty()) {
+                item {
+                    Text("No trash collected yet.")
+                }
+            } else {
+                items(trashItems) { item ->
+                    val category = TrashCategory.fromString(item.categoryName)
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(text = item.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text(text = "Category: ${category.name}")
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(text = category.suggestion)
+                        }
+                    }
+                }
+            }
+
+            // SIGN OUT BUTTON
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            item {
+                Button(onClick = onSignOut) {
+                    Text("Sign Out")
+                }
             }
         }
     }
@@ -101,9 +159,8 @@ fun SimpleStatisticsViewer(trashItems: List<TrashItem>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            // Using a very light blue/gray background
             .padding(vertical = 8.dp)
-            .background(Color(0xFFE3F2FD), RoundedCornerShape(8.dp)) // Light Blue-Gray (e.g., Lighter than Primary Blue)
+            .background(Color(0xFFE3F2FD), RoundedCornerShape(8.dp))
             .padding(12.dp)
     ) {
         // Line 1: Total Items
@@ -112,7 +169,7 @@ fun SimpleStatisticsViewer(trashItems: List<TrashItem>) {
                 withStyle(style = SpanStyle(color = Color.Black, fontWeight = FontWeight.SemiBold)) {
                     append("Total items: ")
                 }
-                withStyle(style = SpanStyle(color = Color(0xFF1976D2), fontWeight = FontWeight.ExtraBold)) { // Primary Blue Accent
+                withStyle(style = SpanStyle(color = Color(0xFF1976D2), fontWeight = FontWeight.ExtraBold)) {
                     append(totalItems.toString())
                 }
             },
@@ -124,21 +181,8 @@ fun SimpleStatisticsViewer(trashItems: List<TrashItem>) {
         // Line 2: Category Breakdown
         Text(
             text = categorySummary,
-            color = Color.DarkGray, // Dark Gray for good readability on light background
+            color = Color.DarkGray,
             fontSize = 14.sp
         )
-    }
-}
-
-@Composable
-fun TrashSummary(trashItems: List<com.example.junklabs.model.TrashItem>) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text("Collected Trash", fontWeight = FontWeight.Bold, fontSize = 20.sp)
-        Spacer(modifier = Modifier.height(8.dp))
-        if (trashItems.isEmpty()) {
-            Text("No trash collected yet.")
-        } else {
-            TrashList(trashItems)
-        }
     }
 }

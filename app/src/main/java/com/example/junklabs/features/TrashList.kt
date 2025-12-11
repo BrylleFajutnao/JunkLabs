@@ -18,22 +18,22 @@ import com.example.junklabs.model.TrashItem
 import com.example.junklabs.model.TrashCategory
 
 @Composable
-fun TrashList(trashItems: List<TrashItem>) {
-    LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        items(trashItems) { item ->
-            val category = TrashCategory.fromString(item.categoryName)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(text = item.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Text(text = "Category: ${category.name}")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = category.suggestion)
+    fun TrashList(trashItems: List<TrashItem>) {
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            items(trashItems) { item ->
+                val category = TrashCategory.fromString(item.categoryName)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = item.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(text = "Category: ${category.name}")
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = category.suggestion)
+                    }
                 }
             }
         }
     }
-}
